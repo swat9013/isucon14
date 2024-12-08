@@ -1,0 +1,12 @@
+/public/
+go/
+img/
+node/
+perl/
+php/
+python/
+rust/
+logs/
+**/log/*
+**/tmp/*
+cookie.txt
