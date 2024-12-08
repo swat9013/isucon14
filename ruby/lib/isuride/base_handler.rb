@@ -26,7 +26,7 @@ module Isuride
     FARE_PER_DISTANCE = 100
 
     # profile
-    # use Estackprof::Middleware
+    use Estackprof::Middleware
 
     # logging
     enable :logging
@@ -190,6 +190,15 @@ module Isuride
       def calculate_fare(pickup_latitude, pickup_longitude, dest_latitude, dest_longitude)
         metered_fare = FARE_PER_DISTANCE * calculate_distance(pickup_latitude, pickup_longitude, dest_latitude, dest_longitude)
         INITIAL_FARE + metered_fare
+      end
+
+      def generate_id
+        # 現在時刻を取得
+        current_time = Time.now
+        # 時刻を指定フォーマットで文字列化
+        formatted_time = current_time.strftime('%Y%m%d%H%M%S%N')
+        # ゼロ埋めして26桁にする
+        result = formatted_time.ljust(26, '0') # 左詰めで右側を0埋め
       end
     end
   end
