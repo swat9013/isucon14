@@ -5,6 +5,7 @@ require 'mysql2-cs-bind'
 require 'sinatra/base'
 require 'sinatra/cookies'
 require 'sinatra/json'
+require 'estackprof'
 
 # mysql2-cs-bind gem にマイクロ秒のサポートを入れる
 module Mysql2CsBindPatch
@@ -23,7 +24,9 @@ module Isuride
     INITIAL_FARE = 500
     FARE_PER_DISTANCE = 100
 
-    enable :logging
+    # profile
+    use Estackprof::Middleware
+
     set :show_exceptions, :after_handler
 
     class HttpError < Sinatra::Error
@@ -34,8 +37,17 @@ module Isuride
         @code = code
       end
     end
+
+    error StandardError do
+      e = env['sinatra.error']
+      logger.error(e)
+      status e.code
+      json(error: e.message)
+    end
+
     error HttpError do
       e = env['sinatra.error']
+      logger.warn(e)
       status e.code
       json(message: e.message)
     end
