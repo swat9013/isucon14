@@ -453,48 +453,77 @@ module Isuride
 
     helpers do
       def get_chair_stats(tx, chair_id)
-        rides = tx.xquery('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC', chair_id)
+        # SQLでデータを集計することで、アプリケーション側での処理を削減
+        stats = tx.xquery(<<~SQL, chair_id)
+          SELECT 
+            COUNT(*) as total_rides_count,
+            COALESCE(AVG(evaluation), 0.0) as total_evaluation_avg
+          FROM rides r
+          WHERE chair_id = ?
+            AND EXISTS (
+              SELECT 1 FROM ride_statuses rs
+              WHERE rs.ride_id = r.id
+                AND rs.status = 'COMPLETED'
+            )
+            AND EXISTS (
+              SELECT 1 FROM ride_statuses rs
+              WHERE rs.ride_id = r.id
+                AND rs.status = 'ARRIVED'
+            )
+            AND EXISTS (
+              SELECT 1 FROM ride_statuses rs
+              WHERE rs.ride_id = r.id
+                AND rs.status = 'CARRYING'
+            )
+        SQL
 
-        total_rides_count = 0
-        total_evaluation = 0.0
-        rides.each do |ride|
-          ride_statuses = tx.xquery('SELECT * FROM ride_statuses WHERE ride_id = ? ORDER BY created_at', ride.fetch(:id))
-
-          arrived_at = nil
-          pickup_at = nil
-          is_completed = false
-          ride_statuses.each do |status|
-            case status.fetch(:status)
-            when 'ARRIVED'
-              arrived_at = status.fetch(:created_at)
-            when 'CARRYING'
-              pickup_at = status.fetch(:created_at)
-            when 'COMPLETED'
-              is_completed = true
-            end
-          end
-          if arrived_at.nil? || pickup_at.nil?
-            next
-          end
-          unless is_completed
-            next
-          end
-
-          total_rides_count += 1
-          total_evaluation += ride.fetch(:evaluation)
-        end
-
-        total_evaluation_avg =
-          if total_rides_count > 0
-            total_evaluation / total_rides_count
-          else
-            0.0
-          end
-
+        result = stats.first
         {
-          total_rides_count:,
-          total_evaluation_avg:,
+          total_rides_count: result[:total_rides_count],
+          total_evaluation_avg: result[:total_evaluation_avg].to_f
         }
+        # rides = tx.xquery('SELECT * FROM rides WHERE chair_id = ? ORDER BY updated_at DESC', chair_id)
+
+        # total_rides_count = 0
+        # total_evaluation = 0.0
+        # rides.each do |ride|
+        #   ride_statuses = tx.xquery('SELECT * FROM ride_statuses WHERE ride_id = ? ORDER BY created_at', ride.fetch(:id))
+
+        #   arrived_at = nil
+        #   pickup_at = nil
+        #   is_completed = false
+        #   ride_statuses.each do |status|
+        #     case status.fetch(:status)
+        #     when 'ARRIVED'
+        #       arrived_at = status.fetch(:created_at)
+        #     when 'CARRYING'
+        #       pickup_at = status.fetch(:created_at)
+        #     when 'COMPLETED'
+        #       is_completed = true
+        #     end
+        #   end
+        #   if arrived_at.nil? || pickup_at.nil?
+        #     next
+        #   end
+        #   unless is_completed
+        #     next
+        #   end
+
+        #   total_rides_count += 1
+        #   total_evaluation += ride.fetch(:evaluation)
+        # end
+
+        # total_evaluation_avg =
+        #   if total_rides_count > 0
+        #     total_evaluation / total_rides_count
+        #   else
+        #     0.0
+        #   end
+
+        # {
+        #   total_rides_count:,
+        #   total_evaluation_avg:,
+        # }
       end
 
       def calculate_discounted_fare(tx, user_id, ride, pickup_latitude, pickup_longitude, dest_latitude, dest_longitude)

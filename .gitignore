@@ -7,6 +7,7 @@ php/
 python/
 rust/
 logs/
+nodejs/
 **/log/*
 **/tmp/*
 cookie.txt
