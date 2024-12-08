@@ -23,7 +23,7 @@ sudo cp ./config/nginx.conf /etc/nginx/nginx.conf
 sudo nginx -s reload
 
 # memcached
-# sudo systemctl restart memcached.service
+sudo systemctl restart memcached.service
 
 set +x
 
