@@ -6,6 +6,7 @@ require 'sinatra/base'
 require 'sinatra/cookies'
 require 'sinatra/json'
 require 'estackprof'
+require 'dalli'
 
 # mysql2-cs-bind gem にマイクロ秒のサポートを入れる
 module Mysql2CsBindPatch
@@ -103,6 +104,31 @@ module Isuride
     helpers Sinatra::Cookies
 
     helpers do
+      # 例:
+      # with_memcached(key) do
+      #   process()
+      # end
+      def cache_client
+        Thread.current[:cache_client] ||= Dalli::Client.new('127.0.0.1:11211')
+      end
+
+      def with_memcached(cache_key)
+        begin
+          cached_response = cache_client.get(cache_key)
+          return cached_response if cached_response
+        rescue Dalli::RingError
+        end
+
+        actual = yield
+
+        begin
+          cache_client.set(cache_key, actual)
+        rescue Dalli::RingError
+        end
+
+        actual
+      end
+
       def bind_json(data_class)
         body = JSON.parse(request.body.tap(&:rewind).read, symbolize_names: true)
         data_class.new(**data_class.members.map { |key| [key, body[key]] }.to_h)
