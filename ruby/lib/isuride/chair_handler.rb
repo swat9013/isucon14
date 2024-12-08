@@ -117,7 +117,14 @@ module Isuride
             yet_sent_ride_status.fetch(:status)
           end
 
-        user = tx.xquery('SELECT * FROM users WHERE id = ? FOR SHARE', ride.fetch(:user_id)).first
+        # user = tx.xquery('SELECT * FROM users WHERE id = ? FOR SHARE', ride.fetch(:user_id)).first
+        user_param=  with_memcached("users_#{ride.fetch(:user_id)}") do
+           user = tx.xquery('SELECT * FROM users WHERE id = ? FOR SHARE', ride.fetch(:user_id)).first
+           {
+              id: user.fetch(:id),
+              name: "#{user.fetch(:firstname)} #{user.fetch(:lastname)}",
+            }
+        end
 
         unless yet_sent_ride_status.nil?
           tx.xquery('UPDATE ride_statuses SET chair_sent_at = CURRENT_TIMESTAMP(6) WHERE id = ?', yet_sent_ride_status.fetch(:id))
@@ -126,10 +133,7 @@ module Isuride
         {
           data: {
             ride_id: ride.fetch(:id),
-            user: {
-              id: user.fetch(:id),
-              name: "#{user.fetch(:firstname)} #{user.fetch(:lastname)}",
-            },
+            user: user_param,
             pickup_coordinate: {
               latitude: ride.fetch(:pickup_latitude),
               longitude: ride.fetch(:pickup_longitude),
