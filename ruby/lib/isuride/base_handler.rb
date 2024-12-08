@@ -34,6 +34,47 @@ module Isuride
     access_log.sync = true
     use Rack::CommonLogger, access_log
 
+    app_log = File.new("log/application.log", "a+")
+    app_log.sync = true
+    app_logger = Logger.new(app_log)
+
+    # curl_logger = Logger.new('log/curl.log')
+
+    before do
+      env["rack.logger"] = app_logger
+
+      #   # テスト作成用
+      # # リクエストヘッダーの取得
+      # http_headers = request.env.select { |k, v| k.start_with?('HTTP_') }
+
+      # # cURL形式でログ出力
+      # curl_command = ["curl -X #{request.request_method}"]
+
+      # # # ヘッダーの追加
+      # # http_headers.each do |k, v|
+      # #   header_name = k.sub('HTTP_', '').split('_').map(&:capitalize).join('-')
+      # #   curl_command << "-H '#{header_name}: #{v}'"
+      # # end
+
+      # # cookieがドメイン指定されている場合に必要
+      # curl_command << "--resolve '#{http_headers['HTTP_HOST']}:8080:127.0.0.1'"
+
+      # curl_command << "-b cookie.txt -c cookie.txt"
+      # # POSTデータの追加
+      # if request.post?
+      #   curl_command << "-d '#{request.body.read}'"
+      #   request.body.rewind
+      # end
+
+      # # URLの追加
+      # curl_command << "'#{request.url}'"
+
+      # # ログに出力
+      # # curl_logger.info "Request Headers: #{http_headers}"
+      # curl_logger.info "#{curl_command.join(' ')}"
+      # # curl_logger.info "Parameters: #{params}"
+    end
+
     set :show_exceptions, :after_handler
 
     class HttpError < Sinatra::Error
