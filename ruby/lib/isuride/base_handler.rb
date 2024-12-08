@@ -25,7 +25,7 @@ module Isuride
     FARE_PER_DISTANCE = 100
 
     # profile
-    use Estackprof::Middleware
+    # use Estackprof::Middleware
 
     # logging
     enable :logging
