@@ -112,8 +112,14 @@ module Isuride
 
           fare = calculate_discounted_fare(tx, @current_user.id, ride, ride.fetch(:pickup_latitude),  ride.fetch(:pickup_longitude), ride.fetch(:destination_latitude), ride.fetch(:destination_longitude))
 
-          chair = tx.xquery('SELECT * FROM chairs WHERE id = ?', ride.fetch(:chair_id)).first
-          owner = tx.xquery('SELECT * FROM owners WHERE id = ?', chair.fetch(:owner_id)).first
+          # chairとownerの情報をキャッシュ
+          chair = with_memcached("chair_#{ride.fetch(:chair_id)}") do
+            tx.xquery('SELECT * FROM chairs WHERE id = ?', ride.fetch(:chair_id)).first
+          end
+
+          owner = with_memcached("owner_#{chair.fetch(:owner_id)}") do
+            tx.xquery('SELECT * FROM owners WHERE id = ?', chair.fetch(:owner_id)).first
+          end
 
           {
             id: ride.fetch(:id),
