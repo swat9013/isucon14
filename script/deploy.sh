@@ -14,8 +14,8 @@ sudo cp ./config/mysqld.cnf /etc/mysql/mysql.conf.d/mysqld.cnf
 sudo systemctl restart mysql
 
 # ruby
-sudo systemctl stop isupipe-ruby.service
-sudo systemctl start isupipe-ruby.service
+sudo systemctl stop isuride-ruby.service
+sudo systemctl start isuride-ruby.service
 
 # nginx
 sudo cp ./config/nginx.conf /etc/nginx/nginx.conf
