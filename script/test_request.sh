@@ -9,5 +9,6 @@ set -e
 
 # シナリオ
 curl -X POST --resolve 'xiv.isucon.net:8080:127.0.0.1' -b cookie.txt -c cookie.txt -d '{"payment_server":"http://43.206.99.106:12345"}' 'http://xiv.isucon.net:8080/api/initialize' -o /dev/null -w '%{http_code} %{url}\n' -s
+curl -X GET --resolve 'isuride.xiv.isucon.net:8080:127.0.0.1' -b cookie.txt -c cookie.txt 'http://isuride.xiv.isucon.net:8080/api/internal/matching' -o /dev/null -w '%{http_code} %{url}\n' -s
 
 echo "\n【SUCCESS】正常に実行されました"
