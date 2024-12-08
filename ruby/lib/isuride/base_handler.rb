@@ -33,15 +33,15 @@ module Isuride
     # use Estackprof::Middleware
 
     # logging
-    enable :logging
-    Dir.mkdir("log") unless File.exist?("log")
-    access_log = File.new("log/access.log","a+")
-    access_log.sync = true
-    use Rack::CommonLogger, access_log
+    # enable :logging
+    # Dir.mkdir("log") unless File.exist?("log")
+    # access_log = File.new("log/access.log","a+")
+    # access_log.sync = true
+    # use Rack::CommonLogger, access_log
 
-    app_log = File.new("log/application.log", "a+")
-    app_log.sync = true
-    app_logger = Logger.new(app_log)
+    # app_log = File.new("log/application.log", "a+")
+    # app_log.sync = true
+    # app_logger = Logger.new(app_log)
 
     # curl_logger = Logger.new('log/curl.log')
 
