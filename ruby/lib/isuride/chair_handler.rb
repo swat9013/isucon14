@@ -26,12 +26,24 @@ module Isuride
       if access_token.nil?
         raise HttpError.new(401, 'chair_session cookie is required')
       end
-      chair = db.xquery('SELECT * FROM chairs WHERE access_token = ?', access_token).first
-      if chair.nil?
+      # chair = db.xquery('SELECT * FROM chairs WHERE access_token = ?', access_token).first
+      # if chair.nil?
+      #   raise HttpError.new(401, 'invalid access token')
+      # end
+
+      # @current_chair = CurrentChair.new(**chair)
+
+      current_chair = with_memcached("chairs_token_#{access_token}")do
+        chair = db.xquery('SELECT * FROM chairs WHERE access_token = ?', access_token).first
+        return nil if chair.nil?
+        CurrentChair.new(**chair)
+      end
+
+      if current_chair.nil?
         raise HttpError.new(401, 'invalid access token')
       end
 
-      @current_chair = CurrentChair.new(**chair)
+      @current_chair = current_chair
     end
 
     ChairPostChairsRequest = Data.define(:name, :model, :chair_register_token)
@@ -65,6 +77,7 @@ module Isuride
       req = bind_json(PostChairActivityRequest)
 
       db.xquery('UPDATE chairs SET is_active = ? WHERE id = ?', req.is_active, @current_chair.id)
+      delete_memcached("chairs_token_#{@current_chair.access_token}")
 
       status(204)
     end
